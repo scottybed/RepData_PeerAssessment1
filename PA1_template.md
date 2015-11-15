@@ -1,30 +1,20 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-author: "Scott Bedard"
-date: "November 15, 2015"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
+Scott Bedard  
+November 15, 2015  
 
-```{r include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(knitr)
-setwd('D:\\Data\\Repositories\\Coursera\\PeerAssessment1')
-options(scipen=999)
-options(digits = 3)
-```
+
 
 ## Loading and preprocessing the data
-```{r}
+
+```r
 data <- read.csv("activity.csv")
 stepsPerDay <- summarise(group_by(data, date), steps=sum(steps))
 ```
 
 
 ## What is mean total number of steps taken per day?
-```{r}
+
+```r
 q <- qplot(stepsPerDay$steps, geom="histogram",binwidth = 250,  
            main = "Histogram for Steps", 
            xlab = "Steps per Day",
@@ -33,51 +23,53 @@ q <- qplot(stepsPerDay$steps, geom="histogram",binwidth = 250,
            col=I("red"), 
            alpha=I(.2))
 ```
-```{r echo=FALSE}
-plot(q)
-```
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+
+```r
 meanSPD <- round(mean(stepsPerDay$steps, na.rm=TRUE), 3)
 medianSPD <- round(median(stepsPerDay$steps, na.rm=TRUE), 3)
 ```
 
-**Mean Steps Per Day** = `r meanSPD`  
-**Median Steps Per Day** = `r medianSPD`  
+**Mean Steps Per Day** = 10766.189  
+**Median Steps Per Day** = 10765  
 
 ## What is the average daily activity pattern?
-```{r}
+
+```r
 stepsPerTimeInterval <- data[c("steps","interval")] %>% group_by(interval) %>% summarise_each(funs(mean(., na.rm = TRUE)))
 g <- ggplot(stepsPerTimeInterval, aes(interval, steps)) + 
     geom_line() +
     xlab("5-minute interval") +
     ylab("Avg number of steps taken")
 ```
-```{r echo=FALSE}
-print(g)
-```
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+
+```r
 maxIntervalSteps <- max(stepsPerTimeInterval$steps)
 maxInterval <- stepsPerTimeInterval[stepsPerTimeInterval$steps==maxIntervalSteps,]$interval
 ```
 
-**The maximum average steps in one interval is `r maxIntervalSteps` at interval `r maxInterval`**  
+**The maximum average steps in one interval is 206.17 at interval 835**  
 
 ## Imputing missing values
-```{r}
+
+```r
 numNA <- sum(is.na(data$steps))
 ```
 
-**There are `r numNA` rows that have no step data.** 
+**There are 2304 rows that have no step data.** 
 
 ###Impute a new data set using the mean of the interval as a replacement value for NA###
-```{r}
+
+```r
 dataMerge <- merge(data, stepsPerTimeInterval, by="interval", all.x=TRUE)
 dataMerge$steps.x[is.na(dataMerge$steps.x)] = as.integer(dataMerge$steps.y[is.na(dataMerge$steps.x)])
 dataImputed <- dataMerge[order(dataMerge$date,dataMerge$interval),c("steps.x", "interval", "date")]
 stepsPerDayImputed <- summarise(group_by(dataImputed, date), steps=sum(steps.x))
 ```
 
-```{r}
+
+```r
 qImputed <- qplot(stepsPerDayImputed$steps, geom="histogram",binwidth = 100,  
            main = "Histogram for Imputed Steps", 
            xlab = "Steps per Day",
@@ -86,16 +78,15 @@ qImputed <- qplot(stepsPerDayImputed$steps, geom="histogram",binwidth = 100,
            col=I("red"), 
            alpha=I(.2))
 ```
-```{r echo=FALSE}
-print(qImputed)
-```
-```{r}
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png) 
+
+```r
 meanSPDImputed <- round(mean(stepsPerDayImputed$steps), 3)
 medianSPDImputed <- median(stepsPerDayImputed$steps)
 ```
 
-**Mean Steps Per Day** = `r meanSPDImputed` (Originally `r meanSPD`)   
-**Median Steps Per Day** = `r medianSPDImputed` (Originally `r medianSPD`)    
+**Mean Steps Per Day** = 10749.77 (Originally 10766.189)   
+**Median Steps Per Day** = 10641 (Originally 10765)    
 
 **Do these values differ from the estimates from the first part of the assignment?**   
 The values differ very minimally. 
@@ -105,7 +96,8 @@ There is not much impact imputing the missing data using the interval mean.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r}
+
+```r
 dataImputed$dateType <-  ifelse(as.POSIXlt(dataImputed$date)$wday %in% c(0,6), 'weekend', 'weekday')
 
 stepsIntervaleDateType <- dataImputed[c("steps.x","interval", "dateType")] %>% group_by(interval, dateType) %>% summarise_each(funs(mean(., na.rm = TRUE)))
@@ -116,9 +108,7 @@ gDateType = ggplot(data=stepsIntervaleDateType, aes(x=interval, y=steps.x)) +
     xlab("5-minute interval") +
     ylab("Avg number of steps taken") 
 ```
-```{r echo=FALSE}
-print(gDateType)
-```
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png) 
 
 **It appears there is more activity on the weekend especially during the daylight hours.**
 
